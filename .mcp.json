@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "brandvoca": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/server.py"],
+      "env": {
+        "BRANDVOCA_API_KEY": "${BRANDVOCA_API_KEY}",
+        "BRANDVOCA_API_URL": "${BRANDVOCA_API_URL}"
+      }
+    }
+  }
+}
