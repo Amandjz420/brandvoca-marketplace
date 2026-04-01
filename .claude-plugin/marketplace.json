@@ -1,0 +1,11 @@
+{
+  "name": "BrandVoca Marketplace",
+  "description": "AI-powered brand identity tools marketplace by BrandVoca",
+  "plugins": [
+    {
+      "name": "brandvoca",
+      "description": "AI-powered brand identity tools for BrandVoca. Generate color palettes, typography, logos, and landing page UIs from your brand analysis.",
+      "path": "plugins/brandvoca"
+    }
+  ]
+}
