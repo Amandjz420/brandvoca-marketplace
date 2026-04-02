@@ -1,11 +1,14 @@
 {
-  "name": "BrandVoca Marketplace",
+  "name": "brandvoca-marketplace",
   "description": "AI-powered brand identity tools marketplace by BrandVoca",
+  "owner": {
+    "name": "Amandjz420"
+  },
   "plugins": [
     {
       "name": "brandvoca",
-      "description": "AI-powered brand identity tools for BrandVoca. Generate color palettes, typography, logos, and landing page UIs from your brand analysis.",
-      "path": "plugins/brandvoca"
+      "description": "AI-powered brand identity tools for BrandVoca. Generate color palettes, typography, logos, and landing pages.",
+      "source": "./plugins/brandvoca"
     }
   ]
 }
