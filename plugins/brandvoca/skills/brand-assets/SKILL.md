@@ -154,6 +154,32 @@ For refinement, common feedback directions:
 - Style: "more minimal", "less geometric in the background", "add more whitespace"
 - Mood: "feel more premium", "less corporate, more human"
 
+## Rating Assets (Thumbs Up / Down)
+
+After showing any generated asset, ask the user if they like it. If they express a clear positive or negative reaction, call `rate_asset` to record the feedback.
+
+| asset_type | asset_id required? | When to use |
+|---|---|---|
+| `analysis` | No | After presenting the brand analysis |
+| `color_palette` | Yes (palette UUID) | After showing a palette |
+| `typography` | Yes (typography UUID) | After showing font pairings |
+| `brand_name` | Yes (brand name UUID) | After showing name suggestions |
+| `logo` | Yes (logo UUID) | After showing a logo image |
+| `website_ui` | Yes (website UI UUID) | After showing the hero mockup |
+
+**Usage pattern:**
+```
+user: "I love this logo!"
+→ rate_asset(brand_id, "logo", "positive", logo_id)
+→ "Great, I've marked this as a favorite."
+
+user: "The colors feel wrong."
+→ rate_asset(brand_id, "color_palette", "negative", palette_id)
+→ Offer to generate a refined version with feedback.
+```
+
+Don't ask explicitly "would you like to rate this?" — just record feedback naturally when the user expresses clear approval or disapproval.
+
 ## Publishing Rules
 
 | Asset | One published at a time? | How to change |

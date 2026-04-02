@@ -6,58 +6,63 @@ description: >
   user says "how many credits do I have", "what plan am I on", "show my usage",
   "check my balance", "upgrade my plan", "what does this cost", "how much will it cost
   to generate a logo", "show my transactions", "view my profile", "edit my profile",
-  or "what's included in the Pro plan". Also trigger proactively when a generation
-  returns a 402 (insufficient credits) or 403 (brand limit reached) error.
+  "buy credits", "top up credits", "show credit packs", or "what's included in the Pro plan".
+  Also trigger proactively when a generation returns a 402 (insufficient credits) or
+  403 (brand limit reached) error.
 metadata:
-  version: "0.1.0"
+  version: "0.2.0"
 ---
 
 # BrandVoca Account Management
 
-Help users manage their account: check credits, view subscription plans, review transaction history, estimate generation costs, and handle credit/limit errors.
+Help users manage their account: check credits, view subscription plans, review transaction
+and payment history, estimate generation costs, buy credit packs, and handle credit/limit errors.
 
 ## Available Tools
 
 | Tool | What it does |
 |------|-------------|
-| `get_my_profile` | Full profile: name, email, credit balance, current subscription |
+| `get_my_profile` | Full profile: name, email, credit balance, current subscription, recent payments |
 | `get_credit_balance` | Quick credit balance check (lightweight) |
 | `get_credit_transactions` | Paginated transaction history with filters |
 | `get_model_pricing` | Credit cost per action — for estimating before generating |
-| `get_subscription_plans` | All plans: Free, Pro, Max (public, no auth needed) |
-| `get_my_subscription` | Current plan details, status, billing period, balance |
+| `get_subscription_plans` | All plans: Free, Pro, Max with INR pricing (public, no auth needed) |
+| `get_my_subscription` | Current plan details, status, billing period, balance, recent payments |
+| `get_credit_packs` | List purchasable one-time credit bundles (Starter / Creator / Pro Pack) |
+| `get_payment_history` | Full payment history: subscriptions and credit top-ups |
 
 ## Common Scenarios
 
 ### "How many credits do I have?"
 
 1. Call `get_credit_balance()`.
-2. Report the number clearly: "You have **485 credits** remaining."
-3. If low (below 50), proactively mention: "That's getting low — a full brand workflow costs about 200 credits. You might want to consider upgrading your plan."
+2. Report clearly: "You have **485 credits** remaining."
+3. If low (below 50), proactively mention: "That's getting low — a full brand workflow costs about 200 credits. You might want to top up or upgrade your plan."
 
 ### "What plan am I on?"
 
 1. Call `get_my_subscription()`.
-2. Report: plan name, monthly credits, brand limit, status.
+2. Report: plan name, monthly credits, brand limit, status, billing period end.
 3. Example: "You're on the **Free** plan — 500 credits/month, 1 brand project, status: active."
 
 ### "Show me the available plans" / "What are the pricing options?"
 
 1. Call `get_subscription_plans()`.
-2. Present all plans in a clear comparison:
+2. Present all plans clearly:
 
 ```
-**Free** — $0/mo
-  500 credits • 1 brand • Community support
+**Free** — ₹0/mo
+  500 credits • 1 brand project • Community support
 
-**Pro** — $20/mo ⭐ Most Popular
-  10,000 credits • Unlimited brands • Priority support
+**Pro** — ₹499/mo ⭐ Most Popular
+  5,000 credits • Unlimited brands • Priority support • Brand asset exports
 
-**Max** — $100/mo
-  100,000 credits • Unlimited brands • Dedicated support • API access
+**Max** — ₹999/mo
+  20,000 credits • Unlimited brands • Dedicated support • API access • Team collaboration
 ```
 
 3. If you know their current plan, highlight it and suggest the logical upgrade.
+4. Note: Payments are processed via the BrandVoca web app (Razorpay). Direct the user there to upgrade.
 
 ### "How much does it cost to generate X?"
 
@@ -72,8 +77,8 @@ Help users manage their account: check credits, view subscription plans, review 
 | Color Palette | ~20 |
 | Typography | ~20 |
 | Brand Name (Grok) | ~30 |
-| Logo Generation | 40 |
-| Website UI | 50 |
+| Logo Generation | ~40 |
+| Website UI | ~50 |
 | **Full workflow** | **~200** |
 
 4. Compare against their balance: "A logo costs about 40 credits. You have 485, so you're good."
@@ -84,52 +89,79 @@ Help users manage their account: check credits, view subscription plans, review 
 2. Present as a clean list, most recent first:
 
 ```
-• Mar 28, 12:30 — Logo Generation — -40 credits (balance: 485)
-• Mar 28, 12:15 — Brand Name — -30 credits (balance: 525)
-• Mar 28, 00:00 — Sign-up Bonus — +500 credits (balance: 500)
+• Apr 3, 12:30 — Logo Generation        — -40 credits  (balance: 485)
+• Apr 3, 12:15 — Brand Name             — -30 credits  (balance: 525)
+• Apr 3, 00:00 — Plan upgrade to Pro    — +4,515 credits (balance: 5,000)
+• Mar 28, 00:00 — Sign-up Bonus         — +500 credits  (balance: 500)
 ```
 
-3. Use `+` (green) for credits added, `-` (red) for credits used.
-4. If the user wants to filter: `get_credit_transactions(action="logo_generation")` or `get_credit_transactions(transaction_type="usage")`.
+3. Use `+` for credits added (green), `-` for credits used (red).
+4. Filtering options: `get_credit_transactions(action="logo_generation")` or `get_credit_transactions(transaction_type="usage")`.
+
+### "Buy credits" / "Top up my credits" / "Show credit packs"
+
+1. Call `get_credit_packs()`.
+2. Present the available one-time credit bundles:
+
+```
+**Starter Pack** — ₹99
+  500 credits • Perfect for trying out extra generations
+
+**Creator Pack** — ₹299 ⭐ Most Popular
+  2,000 credits • Great for ongoing brand work
+
+**Pro Pack** — ₹799
+  6,000 credits • Best value for power users
+```
+
+3. Direct the user to the BrandVoca web app to complete the purchase (Razorpay handles payment).
+
+### "Show my payment history" / "What have I paid for?"
+
+1. Call `get_payment_history()`.
+2. Present as a table:
+
+```
+• Apr 3  — Subscription (Pro)     — ₹499   — completed
+• Apr 3  — Credit Top-up (Creator)— ₹299   — completed
+```
 
 ### "Edit my profile" / "Update my name"
 
-1. Call `get_my_profile()` to show current values.
-2. The profile can be updated via the web app (PATCH /api/auth/me/). The MCP server currently doesn't have an update_profile tool, so direct the user to the web app for edits.
+The MCP plugin is read-only for profile edits. Direct the user to the BrandVoca web app to update their profile (PATCH /api/auth/me/).
 
 ## Proactive Credit Awareness
 
-**Before expensive operations**: When about to run a generation (especially logo or website UI at 40–50 credits each), proactively check the balance first:
+**Before expensive operations**: Before any logo or website UI generation (40–50 credits each), check balance first:
 
 1. Call `get_credit_balance()`.
-2. If balance < estimated cost, warn the user BEFORE calling the generation tool.
-3. Example: "Heads up — a website UI generation costs about 50 credits, and you only have 35 left. Want to proceed, or would you like to check upgrade options first?"
+2. If balance < estimated cost, warn BEFORE calling the generation tool.
+3. Example: "Heads up — website UI costs ~50 credits and you only have 35. Want to top up first, or proceed anyway?"
 
-**After 402 errors**: If any generation tool returns a 402 (insufficient credits):
+**After 402 errors** (insufficient credits):
+1. Call `get_credit_balance()` to confirm balance.
+2. Call `get_model_pricing()` to show the action cost.
+3. Call `get_credit_packs()` to show top-up options.
+4. Call `get_subscription_plans()` to show upgrade options.
+5. Present clearly: "You need ~40 credits but only have 12. Here are your options: [show packs + plans]."
 
-1. Call `get_credit_balance()` to confirm the current balance.
-2. Call `get_model_pricing()` to show what the action costs.
-3. Call `get_subscription_plans()` to show upgrade options.
-4. Present it clearly: "You don't have enough credits for this. You need ~40 credits but only have 12. Here are your upgrade options: [show plans]."
-
-**After 403 errors (brand limit)**: If brand creation returns 403:
-
-1. Call `get_my_subscription()` to check the plan's `max_brands`.
+**After 403 errors** (brand limit):
+1. Call `get_my_subscription()` to check `max_brands`.
 2. Explain: "Your Free plan allows 1 brand project. You've reached that limit."
-3. Call `get_subscription_plans()` and suggest upgrading to Pro or Max for unlimited brands.
+3. Call `get_subscription_plans()` and suggest upgrading to Pro (₹499/mo) or Max (₹999/mo) for unlimited brands.
 
 ## Credit Math
 
-Credits are stored as decimals (e.g. "485.00"). When presenting to users:
+Credits are stored as decimals (e.g. "485.00"). When presenting:
 - Round to whole numbers: "485 credits" not "485.00 credits"
-- For cost estimates, use "approximately" since token-based costs vary slightly per call
-- Flat-cost actions (logo at 40, website UI at 50) are exact
+- For cost estimates, use "approximately" since token-based costs vary slightly
+- Flat-cost actions (logo ~40, website UI ~50) are close to exact
 
-## Plan Comparison Quick Reference
+## Plan Quick Reference
 
 | | Free | Pro | Max |
 |---|---|---|---|
-| Price | $0/mo | $20/mo | $100/mo |
-| Credits | 500/mo | 10,000/mo | 100,000/mo |
+| Price | ₹0/mo | ₹499/mo | ₹999/mo |
+| Credits | 500/mo | 5,000/mo | 20,000/mo |
 | Brands | 1 | Unlimited | Unlimited |
-| Full workflows | ~2 | ~50 | ~500 |
+| Full workflows | ~2 | ~25 | ~100 |

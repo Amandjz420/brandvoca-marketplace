@@ -231,6 +231,39 @@ def get_model_pricing() -> str:
     return _get("/api/auth/credits/pricing/")
 
 
+@app.tool()
+def get_credit_packs() -> str:
+    """
+    List all active one-time credit packs available for purchase.
+    Public endpoint — no authentication required.
+    Returns pack names, credit amounts, prices in INR, and descriptions.
+
+    Available packs (approximate):
+      Starter  — 500 credits  @ ₹99
+      Creator  — 2,000 credits @ ₹299
+      Pro Pack — 6,000 credits @ ₹799
+    """
+    with httpx.Client(timeout=15) as client:
+        r = client.get(
+            f"{API_URL}/api/payments/credit-packs/",
+            headers={"Accept": "application/json"},
+        )
+        return r.text
+
+
+@app.tool()
+def get_payment_history(limit: int = 20, offset: int = 0) -> str:
+    """
+    Get the current user's full payment history — both subscription upgrades
+    and one-time credit pack top-ups.
+
+    Args:
+        limit: Number of records to return (default 20, max 200).
+        offset: Pagination offset.
+    """
+    return _get("/api/payments/history/", {"limit": limit, "offset": offset})
+
+
 # ── HTTP helpers ──────────────────────────────────────────────────────────
 
 
@@ -600,6 +633,56 @@ def list_website_uis(brand_id: str) -> str:
         brand_id: UUID of the brand.
     """
     return _get(f"/api/brands/{brand_id}/website-uis/")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Asset Feedback (thumbs up / thumbs down)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.tool()
+def rate_asset(
+    brand_id: str,
+    asset_type: str,
+    rating: str,
+    asset_id: str = "",
+) -> str:
+    """
+    Rate a generated brand asset as positive (thumbs up) or negative (thumbs down).
+    Use this after showing an asset to the user and asking for their reaction.
+
+    asset_type values and whether asset_id is required:
+      "analysis"      — brand analysis report (no asset_id needed)
+      "color_palette" — a color palette version (asset_id = palette UUID)
+      "typography"    — a typography version (asset_id = typography UUID)
+      "brand_name"    — a brand name version (asset_id = brand name UUID)
+      "logo"          — a logo version (asset_id = logo UUID)
+      "website_ui"    — a website UI version (asset_id = website UI UUID)
+
+    Args:
+        brand_id:   UUID of the brand.
+        asset_type: One of the asset types listed above.
+        rating:     "positive" (thumbs up / liked) or "negative" (thumbs down / disliked).
+        asset_id:   UUID of the specific asset version — required for all types except "analysis".
+    """
+    if rating not in ("positive", "negative"):
+        return '{"error": "rating must be \\"positive\\" or \\"negative\\""}'
+
+    path_map = {
+        "analysis":      f"/api/brands/{brand_id}/analysis/feedback/",
+        "color_palette": f"/api/brands/{brand_id}/color-palette/{asset_id}/feedback/",
+        "typography":    f"/api/brands/{brand_id}/typography/{asset_id}/feedback/",
+        "brand_name":    f"/api/brands/{brand_id}/brand-name/{asset_id}/feedback/",
+        "logo":          f"/api/brands/{brand_id}/logo/{asset_id}/feedback/",
+        "website_ui":    f"/api/brands/{brand_id}/website-ui/{asset_id}/feedback/",
+    }
+
+    if asset_type not in path_map:
+        return f'{{"error": "Unknown asset_type: {asset_type}. Must be one of: {list(path_map.keys())}"}}'
+
+    if asset_type != "analysis" and not asset_id:
+        return f'{{"error": "asset_id is required for asset_type \\"{asset_type}\\""}}'
+
+    return _post(path_map[asset_type], {"rating": rating})
 
 
 # ── Entry point ───────────────────────────────────────────────────────────
