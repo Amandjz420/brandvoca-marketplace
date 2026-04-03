@@ -66,73 +66,95 @@ curl -X POST https://brandvoca-backend-production.up.railway.app/api/token/ \
 
 ## Available Tools (via MCP)
 
-### Auth
+### Auth (8 tools)
 | Tool | Description |
 |------|-------------|
+| `register` | Create a new account with username, email, password |
 | `login` | Log in with username + password, stores token for session |
 | `login_with_google` | Sign in/up with Google email (trusted mode) |
 | `login_with_apple` | Sign in/up with Apple email (trusted mode) |
+| `logout` | Revoke refresh token and clear session |
+| `refresh_token` | Exchange refresh token for a new access token |
 | `get_my_profile` | Get current user's profile, credits, and subscription |
+| `update_profile` | Update user's email, first name, or last name |
 
-### Subscription
+### Subscription (2 tools)
 | Tool | Description |
 |------|-------------|
 | `get_subscription_plans` | List all plans — Free, Pro, Max (public, no auth) |
 | `get_my_subscription` | Current user's plan, status, billing period, balance |
 
-### Credits
+### Credits & Payments (7 tools)
 | Tool | Description |
 |------|-------------|
 | `get_credit_balance` | Quick credit balance check |
 | `get_credit_transactions` | Paginated transaction history with filters |
 | `get_model_pricing` | Credit cost per action (estimate before generating) |
+| `get_credit_packs` | List purchasable one-time credit bundles (public) |
+| `create_payment_order` | Create Razorpay order for subscription or credit top-up |
+| `verify_payment` | Verify Razorpay payment and fulfill transaction |
+| `get_payment_history` | Full payment history (subscriptions + top-ups) |
 
-### Brand
+### Brand (4 tools)
 | Tool | Description |
 |------|-------------|
+| `brand_intake` | Create a new brand from text + files; Gemini auto-fills questionnaire |
 | `list_brands` | List all brands with optional search/status filters |
 | `get_brand` | Full brand details (questionnaire, analysis, all published assets) |
 | `delete_brand` | Permanently delete a brand and all related data |
 
-### Analysis
+### Questionnaire & Analysis (3 tools)
 | Tool | Description |
 |------|-------------|
 | `get_questionnaire` | View the 30-field brand questionnaire |
+| `update_questionnaire` | Update/submit questionnaire fields (set submit=True to finalize) |
 | `generate_brand_analysis` | Generate 7-section analysis from completed questionnaire |
 
-### Color Palette
+### Color Palette (4 tools)
 | Tool | Description |
 |------|-------------|
 | `generate_color_palette` | Generate/refine a color system using Gemini |
+| `get_color_palette` | Get a specific palette version by ID |
 | `list_color_palettes` | List all palette versions |
 | `publish_color_palette` | Publish a palette version |
 
-### Typography
+### Typography (4 tools)
 | Tool | Description |
 |------|-------------|
 | `generate_typography` | Generate/refine a font-pairing system using Gemini |
+| `get_typography` | Get a specific typography version by ID |
 | `list_typographies` | List all typography versions |
 | `publish_typography` | Publish a typography version |
 
-### Brand Name
+### Brand Name (4 tools)
 | Tool | Description |
 |------|-------------|
 | `generate_brand_names` | Generate AI name suggestions using Grok (5 categories) |
+| `get_brand_name` | Get a specific brand name version by ID |
 | `list_brand_names` | List all name versions |
 | `publish_brand_name` | Publish a name (propagates across all brand assets) |
 
-### Logo
+### Logo (6 tools)
 | Tool | Description |
 |------|-------------|
 | `generate_logo` | Generate a logo image in one of 6 styles using Gemini |
+| `get_logo` | Get a specific logo version by ID |
 | `list_logos` | List all logo versions (filter by style/status) |
 | `publish_logo` | Publish a logo version |
+| `upload_primary_logo` | Upload/replace the primary logo reference image |
+| `delete_primary_logo` | Remove the primary logo reference image |
 
-### Website UI
+### Website UI (3 tools)
 | Tool | Description |
 |------|-------------|
 | `generate_website_ui` | Generate a landing page hero section UI image |
+| `get_website_ui` | Get a specific website UI version by ID |
 | `list_website_uis` | List all website UI versions |
+
+### Feedback (1 tool)
+| Tool | Description |
+|------|-------------|
+| `rate_asset` | Rate any asset as positive/negative (thumbs up/down) |
 
 ## Usage
 

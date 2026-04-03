@@ -10,7 +10,7 @@ description: >
   Also trigger proactively when a generation returns a 402 (insufficient credits) or
   403 (brand limit reached) error.
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # BrandVoca Account Management
@@ -23,12 +23,15 @@ and payment history, estimate generation costs, buy credit packs, and handle cre
 | Tool | What it does |
 |------|-------------|
 | `get_my_profile` | Full profile: name, email, credit balance, current subscription, recent payments |
+| `update_profile` | Update user's email, first name, or last name |
 | `get_credit_balance` | Quick credit balance check (lightweight) |
 | `get_credit_transactions` | Paginated transaction history with filters |
 | `get_model_pricing` | Credit cost per action — for estimating before generating |
 | `get_subscription_plans` | All plans: Free, Pro, Max with INR pricing (public, no auth needed) |
 | `get_my_subscription` | Current plan details, status, billing period, balance, recent payments |
 | `get_credit_packs` | List purchasable one-time credit bundles (Starter / Creator / Pro Pack) |
+| `create_payment_order` | Create a Razorpay order for subscription upgrade or credit top-up |
+| `verify_payment` | Verify & capture a Razorpay payment after checkout |
 | `get_payment_history` | Full payment history: subscriptions and credit top-ups |
 
 ## Common Scenarios
@@ -62,7 +65,7 @@ and payment history, estimate generation costs, buy credit packs, and handle cre
 ```
 
 3. If you know their current plan, highlight it and suggest the logical upgrade.
-4. Note: Payments are processed via the BrandVoca web app (Razorpay). Direct the user there to upgrade.
+4. Payments can be initiated via `create_payment_order` and completed via `verify_payment` (Razorpay flow), or the user can upgrade through the BrandVoca web app.
 
 ### "How much does it cost to generate X?"
 
@@ -114,7 +117,24 @@ and payment history, estimate generation costs, buy credit packs, and handle cre
   6,000 credits • Best value for power users
 ```
 
-3. Direct the user to the BrandVoca web app to complete the purchase (Razorpay handles payment).
+3. If the user wants to purchase directly, use the payment flow:
+   a. Call `create_payment_order(amount=<paise>, payment_type="credit_topup", credit_pack_id="<pack_uuid>")`.
+      - Amount is in paise (e.g. ₹299 = 29900 paise).
+   b. The response contains `order_id`, `amount`, `currency`, and `key_id`.
+   c. The user completes checkout via Razorpay (web app or frontend handles the UI).
+   d. After checkout, call `verify_payment(razorpay_order_id, razorpay_payment_id, razorpay_signature, payment_type="credit_topup", credit_pack_id="<pack_uuid>")`.
+   e. On success: credits are added immediately. Report the new balance.
+4. Alternatively, direct the user to the BrandVoca web app to complete the purchase.
+
+### "Upgrade my plan" / "Switch to Pro"
+
+1. Call `get_subscription_plans()` to show options.
+2. Call `get_my_subscription()` to show their current plan.
+3. If the user confirms an upgrade:
+   a. Call `create_payment_order(amount=<paise>, payment_type="subscription", plan_id="<plan_uuid>")`.
+   b. The user completes checkout via Razorpay.
+   c. Call `verify_payment(...)` with `payment_type="subscription"` and `plan_id`.
+   d. On success: subscription is upgraded immediately. Report the new plan and credit balance.
 
 ### "Show my payment history" / "What have I paid for?"
 
@@ -126,9 +146,12 @@ and payment history, estimate generation costs, buy credit packs, and handle cre
 • Apr 3  — Credit Top-up (Creator)— ₹299   — completed
 ```
 
-### "Edit my profile" / "Update my name"
+### "Edit my profile" / "Update my name" / "Change my email"
 
-The MCP plugin is read-only for profile edits. Direct the user to the BrandVoca web app to update their profile (PATCH /api/auth/me/).
+1. Ask which fields to update: email, first name, or last name.
+2. Call `update_profile(email="...", first_name="...", last_name="...")` — only pass the fields being changed.
+3. On success: confirm the update and show the new profile info.
+4. On failure: show the error (e.g. email already taken).
 
 ## Proactive Credit Awareness
 
