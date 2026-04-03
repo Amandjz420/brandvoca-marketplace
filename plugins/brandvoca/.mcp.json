@@ -1,10 +1,9 @@
 {
   "mcpServers": {
     "brandvoca": {
-      "command": "python3",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp-server/server.py"],
-      "env": {
-        "BRANDVOCA_API_URL": "https://brandvoca-backend-production.up.railway.app"
+      "url": "https://brandvoca-backend-production.up.railway.app/mcp",
+      "headers": {
+        "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1NzM2MzE0LCJpYXQiOjE3NzUxMzE1MTQsImp0aSI6IjE5NGM3YmJkMmMxZjRmYzZhMzU2NDk3ZjY1MmZhMjg5IiwidXNlcl9pZCI6IjIifQ.zA1COs10TTrLhVmW5MUXc2RBs5tIfivUsQ5GsnwnouI"
       }
     }
   }
