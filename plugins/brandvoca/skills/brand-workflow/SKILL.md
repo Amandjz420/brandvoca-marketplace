@@ -7,12 +7,12 @@ description: >
   end-to-end. Also use when the user asks "what should I do next" for a brand that already
   exists but is incomplete.
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # BrandVoca Brand Workflow
 
-Guide the user through BrandVoca's 8-step brand identity pipeline. Each step builds on the previous one.
+Guide the user through BrandVoca's 9-step brand identity pipeline. Each step builds on the previous one.
 
 ## Available Tools (Workflow-Specific)
 
@@ -29,6 +29,9 @@ Guide the user through BrandVoca's 8-step brand identity pipeline. Each step bui
 | `generate_logo` | Generate logo in one of 6 styles (+ `publish_logo`) |
 | `upload_primary_logo` | Upload a reference logo image before generating logos |
 | `generate_website_ui` | Generate landing page hero section |
+| `generate_brand_kit` | Generate complete design system / UI kit (+ `publish_brand_kit`) |
+| `get_brand_kit` | Get a specific brand kit version by ID |
+| `list_brand_kits` | List all brand kit versions |
 
 ## The Pipeline (in order)
 
@@ -41,6 +44,7 @@ Guide the user through BrandVoca's 8-step brand identity pipeline. Each step bui
 6. Brand Name    → Grok generates name suggestions → user picks one to publish
 7. Logo          → Gemini generates logo images (6 styles available)
 8. Website UI    → Gemini generates landing page hero section
+9. Brand Kit     → Gemini generates complete design system / UI kit (14 sections)
 ```
 
 ## Starting a New Brand
@@ -69,6 +73,7 @@ Call `get_brand(brand_id)` and inspect the response:
 - `published_brand_name.name` is present → Step 6 done
 - `published_logos` is non-empty → Step 7 done
 - `latest_website_ui` is present → Step 8 done
+- `published_brand_kit` is present → Step 9 done
 
 Tell the user clearly which step they're on and what comes next.
 
@@ -127,6 +132,17 @@ Tell the user clearly which step they're on and what comes next.
 - Show the returned `image_url` and `concept` text.
 - Explain this is a 1440px desktop landing page hero section: nav bar, hero headline, visual system element.
 - For refinement: call `generate_website_ui` with `user_feedback` + `previous_version_id`.
+
+### Step 9 — Brand Kit (Design System)
+- **Prerequisites**: brand analysis (Step 3) + published color palette (Step 4) + published typography (Step 5). All three are required.
+- Call `generate_brand_kit(brand_id)` — this is the most comprehensive generation, takes 30–90 seconds.
+- The result is a complete design system with 14 sections: meta, colors, typography, spacing, buttons, forms, modals, cards, navigation, alerts & badges, interactions, page templates, design principles, and how-to-use guide.
+- All component code is TSX (React JSX) with Tailwind CSS using brand-specific tokens via CSS variables (`hsl(var(--coral))`).
+- Don't dump the entire response — summarize the meta info and mention how many component categories were generated. Offer to show specific sections.
+- First generation is auto-published.
+- For refinement: call `generate_brand_kit(brand_id, user_feedback="...", previous_version_id="...")` then `publish_brand_kit(brand_id, kit_id)` on the new version.
+- To view a specific version: `get_brand_kit(brand_id, kit_id)`.
+- To list all versions: `list_brand_kits(brand_id)`.
 
 ## Presenting Results
 

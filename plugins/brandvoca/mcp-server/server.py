@@ -1082,6 +1082,86 @@ def list_website_uis(brand_id: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════════════════════
+# Brand Kit (Design System / UI Kit)
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@app.tool()
+def generate_brand_kit(
+    brand_id: str,
+    user_feedback: str = "",
+    previous_version_id: str = "",
+) -> str:
+    """
+    Generate a complete design system / UI kit from the brand analysis,
+    published color palette, and published typography.
+
+    Produces a full interactive-ready design system with 14 sections:
+    Colors, Typography, Spacing & Grid, Buttons, Inputs & Forms, Modals,
+    Cards, Navigation, Alerts & Badges, Interactions, Page Templates,
+    Design Principles, How to Use, and Tailwind Config.
+
+    All code snippets use TSX (React JSX) with Tailwind classes using
+    the brand's custom color tokens via CSS variables.
+
+    Prerequisites: Brand analysis + published color palette + published typography.
+    First generation → v1 + auto-published. Subsequent → draft.
+
+    Args:
+        brand_id: UUID of the brand.
+        user_feedback: Refinement notes (e.g. "make buttons more rounded", "use darker backgrounds").
+        previous_version_id: UUID of a previous brand kit version to refine from.
+    """
+    payload: dict = {}
+    if user_feedback:
+        payload["user_feedback"] = user_feedback
+    if previous_version_id:
+        payload["previous_version_id"] = previous_version_id
+    return _post(f"/api/brands/{brand_id}/brand-kit/generate/", payload)
+
+
+@app.tool()
+def get_brand_kit(brand_id: str, kit_id: str) -> str:
+    """
+    Get a specific brand kit version by ID.
+
+    Returns the full design system JSON with all 14 sections:
+    meta, colors, typography, spacing, buttons, forms, modals, cards,
+    navigation, alerts_and_badges, interactions, page_templates,
+    design_principles, how_to_use, tailwind_config.
+
+    Args:
+        brand_id: UUID of the brand.
+        kit_id: UUID of the brand kit version.
+    """
+    return _get(f"/api/brands/{brand_id}/brand-kit/{kit_id}/")
+
+
+@app.tool()
+def list_brand_kits(brand_id: str) -> str:
+    """
+    List all brand kit versions for a brand (newest first).
+
+    Args:
+        brand_id: UUID of the brand.
+    """
+    return _get(f"/api/brands/{brand_id}/brand-kits/")
+
+
+@app.tool()
+def publish_brand_kit(brand_id: str, kit_id: str) -> str:
+    """
+    Publish a specific brand kit version. Automatically unpublishes
+    any previously published brand kit for this brand.
+
+    Args:
+        brand_id: UUID of the brand.
+        kit_id: UUID of the brand kit version to publish.
+    """
+    return _post(f"/api/brands/{brand_id}/brand-kit/{kit_id}/publish/")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
 # Asset Feedback (thumbs up / thumbs down)
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -1103,6 +1183,7 @@ def rate_asset(
       "brand_name"    — a brand name version (asset_id = brand name UUID)
       "logo"          — a logo version (asset_id = logo UUID)
       "website_ui"    — a website UI version (asset_id = website UI UUID)
+      "brand_kit"     — a brand kit / design system version (asset_id = kit UUID)
 
     Args:
         brand_id:   UUID of the brand.
@@ -1120,6 +1201,7 @@ def rate_asset(
         "brand_name":    f"/api/brands/{brand_id}/brand-name/{asset_id}/feedback/",
         "logo":          f"/api/brands/{brand_id}/logo/{asset_id}/feedback/",
         "website_ui":    f"/api/brands/{brand_id}/website-ui/{asset_id}/feedback/",
+        "brand_kit":     f"/api/brands/{brand_id}/brand-kit/{asset_id}/feedback/",
     }
 
     if asset_type not in path_map:

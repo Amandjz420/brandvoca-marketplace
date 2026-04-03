@@ -6,10 +6,12 @@ description: >
   "refine the palette", "new typography", "generate brand names", "suggest names for my brand",
   "generate website UI", "create landing page design", "regenerate the logo",
   "I want a different color palette", "refine my logo", "try a different logo style",
-  "generate all logos", "show me logo options". Also use for any publishing action:
-  "publish this palette", "publish the logo", "make this the active brand name".
+  "generate all logos", "show me logo options", "generate brand kit", "create design system",
+  "generate UI kit", "show me the brand kit", "refine the brand kit". Also use for any
+  publishing action: "publish this palette", "publish the logo", "make this the active brand name",
+  "publish the brand kit".
 metadata:
-  version: "0.2.0"
+  version: "0.3.0"
 ---
 
 # BrandVoca Brand Assets
@@ -41,6 +43,10 @@ Generate, refine, and publish specific brand assets for an existing brand.
 | `generate_website_ui` | Generate a landing page hero section UI image |
 | `get_website_ui` | Get a specific website UI version by ID |
 | `list_website_uis` | List all website UI versions |
+| `generate_brand_kit` | Generate a complete design system / UI kit using Gemini |
+| `get_brand_kit` | Get a specific brand kit version by ID |
+| `list_brand_kits` | List all brand kit versions (draft + published) |
+| `publish_brand_kit` | Publish a brand kit version |
 | `rate_asset` | Rate any asset as positive/negative (thumbs up/down) |
 
 ## Prerequisites
@@ -52,6 +58,11 @@ Before generating assets, the brand needs:
 For logo and website UI generation, also needed:
 - Published color palette (Step 4)
 - Published typography (Step 5)
+
+For brand kit generation, also needed:
+- Published color palette (Step 4)
+- Published typography (Step 5)
+- Brand analysis (Step 3)
 
 If prerequisites are missing, tell the user which step to complete first.
 
@@ -203,6 +214,61 @@ For refinement, common feedback directions:
 - Style: "more minimal", "less geometric in the background", "add more whitespace"
 - Mood: "feel more premium", "less corporate, more human"
 
+## Brand Kit (Design System)
+
+### What It Generates
+
+The brand kit is a complete design system / UI kit with 14 sections:
+- **meta** — brand name, tagline, version metadata
+- **colors** — core palette swatches + semantic color tokens (CSS variables using HSL)
+- **typography** — type scale, font pairings, specimen examples
+- **spacing** — spacing scale, layout grid, container widths
+- **buttons** — primary/secondary/ghost/destructive button variants with TSX code
+- **forms** — input fields, selects, checkboxes, radio buttons with TSX code
+- **modals** — dialog, confirmation, drawer patterns with TSX code
+- **cards** — content card, pricing card, feature card variants with TSX code
+- **navigation** — navbar, sidebar, breadcrumbs, pagination with TSX code
+- **alertsAndBadges** — alert banners, toast notifications, status badges with TSX code
+- **interactions** — hover states, transitions, loading patterns
+- **pageTemplates** — hero section, features grid, pricing page layouts with TSX code
+- **designPrinciples** — guiding principles for the design system
+- **howToUse** — developer quick-start guide for using the kit
+
+All TSX code uses Tailwind CSS with custom brand tokens via CSS variables (e.g., `hsl(var(--coral))`).
+
+### Generating
+
+Call `generate_brand_kit(brand_id)`. This is the most comprehensive generation — takes 30–90 seconds.
+
+Prerequisites (all required):
+1. Brand analysis must exist (Step 3)
+2. Published color palette (Step 4)
+3. Published typography (Step 5)
+
+If any prerequisite is missing, the API returns an error explaining what's needed.
+
+### Presenting Results
+
+The response contains all 14 sections. Don't dump the entire JSON — instead:
+- Summarize the meta info (brand name, tagline)
+- List the core palette colors with their CSS variable names
+- Mention the number of component categories generated
+- Offer to show specific sections in detail: "Want to see the button components, card layouts, or page templates?"
+
+### Refinement
+
+When the user wants to refine the brand kit:
+1. Get the current kit ID from `list_brand_kits(brand_id)` or the previous generation response.
+   - To view a specific version: `get_brand_kit(brand_id, kit_id)`.
+2. Ask for specific feedback: "buttons too rounded?", "need darker backgrounds?", "cards need more padding?", "navigation should be more minimal?"
+3. Call `generate_brand_kit(brand_id, user_feedback="...", previous_version_id="...")`.
+4. Show what changed in the new version.
+5. Publish with `publish_brand_kit(brand_id, kit_id)` when happy.
+
+### Publishing
+
+Call `publish_brand_kit(brand_id, kit_id)`. Only one brand kit can be published per brand at a time — publishing a new version automatically un-publishes the previous one.
+
 ## Rating Assets (Thumbs Up / Down)
 
 After showing any generated asset, ask the user if they like it. If they express a clear positive or negative reaction, call `rate_asset` to record the feedback.
@@ -215,6 +281,7 @@ After showing any generated asset, ask the user if they like it. If they express
 | `brand_name` | Yes (brand name UUID) | After showing name suggestions |
 | `logo` | Yes (logo UUID) | After showing a logo image |
 | `website_ui` | Yes (website UI UUID) | After showing the hero mockup |
+| `brand_kit` | Yes (brand kit UUID) | After showing the design system |
 
 **Usage pattern:**
 ```
@@ -238,3 +305,4 @@ Don't ask explicitly "would you like to rate this?" — just record feedback nat
 | Brand Name | Yes (per brand) | Publish new version — old auto-unpublishes |
 | Logo | Yes per style (6 slots) | Publish new version of same style |
 | Website UI | No publish concept | All versions are equal |
+| Brand Kit | Yes (per brand) | Publish new version — old auto-unpublishes |
