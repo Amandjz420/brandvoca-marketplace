@@ -1,5 +1,5 @@
 ---
-name: login
+name: brandvoca-login
 description: >
   Use this skill at the START of every BrandVoca session before calling any
   other tool. Trigger when: the user hasn't logged in yet, any tool returns

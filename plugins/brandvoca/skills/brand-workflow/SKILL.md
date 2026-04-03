@@ -1,5 +1,5 @@
 ---
-name: brand-workflow
+name: brandvoca-brand-workflow
 description: >
   Use this skill when the user says "set up a new brand", "create a brand from scratch",
   "walk me through brand creation", "build a brand identity", "start a new brand project",

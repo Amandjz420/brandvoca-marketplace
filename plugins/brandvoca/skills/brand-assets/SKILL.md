@@ -1,5 +1,5 @@
 ---
-name: brand-assets
+name: brandvoca-brand-assets
 description: >
   Use this skill when the user wants to generate or refine a specific brand asset.
   Trigger phrases: "generate a logo", "make me a logo", "generate color palette",

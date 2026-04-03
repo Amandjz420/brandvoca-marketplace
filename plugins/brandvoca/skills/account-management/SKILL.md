@@ -1,5 +1,5 @@
 ---
-name: account-management
+name: brandvoca-account-management
 description: >
   Use this skill when the user asks about their credits, balance, subscription, plan,
   pricing, transaction history, usage, profile, account, or billing. Also use when the
