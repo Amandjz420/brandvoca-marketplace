@@ -1,6 +1,15 @@
 # BrandVoca Plugin
 
-AI-powered brand identity tools for Claude. Connects to your BrandVoca backend and lets you generate color palettes, typography systems, logo images, and landing page UI designs directly from a conversation.
+AI-powered brand identity tools for Claude and Codex. Connects to your BrandVoca backend and lets you generate color palettes, typography systems, logo images, and landing page UI designs directly from a conversation.
+
+## Runtime Layout
+
+- Claude manifest: `.claude-plugin/plugin.json`
+- Codex manifest: `.codex-plugin/plugin.json`
+- Claude MCP config: `.mcp.json`
+- Codex MCP config: `.mcp.codex.json`
+
+The Claude and Codex manifests coexist, so you can support both runtimes from the same plugin folder and the same shared skills/MCP implementation.
 
 ## Components
 
@@ -34,6 +43,8 @@ export BRANDVOCA_API_KEY="your_bearer_token_here"
 # Optional: override the API URL (defaults to https://brandvoca-backend-production.up.railway.app)
 export BRANDVOCA_API_URL="https://brandvoca-backend-production.up.railway.app"
 ```
+
+Claude and Codex both use the same `BRANDVOCA_API_KEY` value for authentication.
 
 ### 3. How to get your API key
 

@@ -1,0 +1,43 @@
+{
+  "name": "brandvoca",
+  "version": "0.3.0",
+  "description": "AI-powered brand identity platform. Create brands, generate logos, color palettes, typography, brand names, website UIs, and design systems.",
+  "author": {
+    "name": "BrandVoca",
+    "email": "[TODO: author-email]",
+    "url": "https://github.com/Amandjz420/brandvoca-brandvoca-plugin"
+  },
+  "homepage": "https://github.com/Amandjz420/brandvoca-brandvoca-plugin",
+  "repository": "https://github.com/Amandjz420/brandvoca-brandvoca-plugin",
+  "license": "[TODO: license]",
+  "keywords": [
+    "brand",
+    "design",
+    "logo",
+    "color palette",
+    "typography"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.codex.json",
+  "interface": {
+    "displayName": "BrandVoca",
+    "shortDescription": "Generate brand strategy and visual identity assets",
+    "longDescription": "Use BrandVoca to authenticate, inspect brand progress, generate strategy outputs, and create visual assets like palettes, typography, logos, names, and website UI concepts.",
+    "developerName": "BrandVoca",
+    "category": "Design",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/Amandjz420/brandvoca-brandvoca-plugin",
+    "privacyPolicyURL": "[TODO: privacy-policy-url]",
+    "termsOfServiceURL": "[TODO: terms-of-service-url]",
+    "defaultPrompt": [
+      "Log me into BrandVoca and show my current credits",
+      "Check what step my brand is on and recommend the next action",
+      "Generate new BrandVoca logo ideas for an existing brand"
+    ],
+    "brandColor": "#1F6FEB",
+    "screenshots": []
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "brandvoca": {
+      "url": "https://brandvoca-backend-production.up.railway.app/mcp",
+      "headers": {
+        "Authorization": "Bearer ${BRANDVOCA_API_KEY}"
+      }
+    }
+  }
+}

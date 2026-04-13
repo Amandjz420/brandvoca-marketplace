@@ -1,0 +1,20 @@
+{
+  "name": "brandvoca-marketplace",
+  "interface": {
+    "displayName": "BrandVoca Marketplace"
+  },
+  "plugins": [
+    {
+      "name": "brandvoca",
+      "source": {
+        "source": "local",
+        "path": "./plugins/brandvoca"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Design"
+    }
+  ]
+}
