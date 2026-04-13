@@ -8,7 +8,7 @@ description: >
   to generate a logo", "show my transactions", "view my profile", "edit my profile",
   "buy credits", "top up credits", "show credit packs", or "what's included in the Pro plan".
   Also trigger proactively when a generation returns a 402 (insufficient credits) or
-  403 (brand limit reached) error.
+  403 (brand limit reached) error. No login is required — auth is handled via JWT token.
 metadata:
   version: "0.3.0"
 ---
@@ -81,6 +81,8 @@ and payment history, estimate generation costs, buy credit packs, and handle cre
 | Typography | ~20 |
 | Brand Name (Grok) | ~30 |
 | Logo Generation | ~40 |
+| Logo SVG Export | 15 (free after first) |
+| Domain Check | 10 (flat) |
 | Website UI | ~50 |
 | **Full workflow** | **~200** |
 

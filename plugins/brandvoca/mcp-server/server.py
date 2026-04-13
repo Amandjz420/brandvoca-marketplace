@@ -4,15 +4,13 @@ BrandVoca MCP Server
 --------------------
 Exposes the BrandVoca REST API as tools for Claude.
 
-Authentication — two ways to provide credentials:
+Authentication: set BRANDVOCA_API_KEY before starting Claude.
 
-  Option A (recommended): set env vars before starting Claude
-      export BRANDVOCA_API_KEY="your_access_token"
-      export BRANDVOCA_API_URL="https://brandvoca-backend-production.up.railway.app"   # optional
+    export BRANDVOCA_API_KEY="your_jwt_access_token"
+    export BRANDVOCA_API_URL="https://brandvoca-backend-production.up.railway.app"   # optional
 
-  Option B: call the `login` tool from a conversation
-      Claude will call login(username, password) → stores the token
-      in memory for the rest of the session.
+The JWT token is issued by the BrandVoca web or mobile app.
+No in-session login is required or supported.
 """
 import os
 import httpx
@@ -22,177 +20,28 @@ from mcp.server.fastmcp import FastMCP
 
 API_URL = os.environ.get("BRANDVOCA_API_URL", "https://brandvoca-backend-production.up.railway.app").rstrip("/")
 
-# Token can come from env var OR be set at runtime by the login() tool
-_runtime_token: str = os.environ.get("BRANDVOCA_API_KEY", "")
-
 app = FastMCP("brandvoca")
 
 
 # ── HTTP helpers ──────────────────────────────────────────────────────────
 
 def _headers() -> dict:
-    if not _runtime_token:
+    token = os.environ.get("BRANDVOCA_API_KEY", "")
+    if not token:
         raise RuntimeError(
-            "Not authenticated. Call the login tool first, or set "
-            "BRANDVOCA_API_KEY in your environment."
+            "BRANDVOCA_API_KEY is not set. Add it to your environment: "
+            "export BRANDVOCA_API_KEY=your_jwt_token"
         )
     return {
-        "Authorization": f"Bearer {_runtime_token}",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "Accept": "application/json",
     }
 
 
-# ── Auth tools ────────────────────────────────────────────────────────────
-
-@app.tool()
-def login(username: str, password: str) -> str:
-    """
-    Log in to BrandVoca with a username and password.
-    Stores the access token in memory for this session.
-    You only need to call this once per conversation if BRANDVOCA_API_KEY
-    is not set in the environment.
-
-    Args:
-        username: Your BrandVoca account username.
-        password: Your BrandVoca account password.
-    """
-    global _runtime_token
-    with httpx.Client(timeout=15) as client:
-        r = client.post(
-            f"{API_URL}/api/auth/login/",
-            json={"username": username, "password": password},
-            headers={"Content-Type": "application/json"},
-        )
-    data = r.json()
-    if r.status_code == 200 and data.get("success"):
-        _runtime_token = data["tokens"]["access"]
-        user = data.get("user", {})
-        return (
-            f"Logged in as {user.get('username', username)}. "
-            f"Access token stored for this session."
-        )
-    return f"Login failed: {r.text}"
-
-
-@app.tool()
-def register(
-    username: str,
-    email: str,
-    password: str,
-    password2: str,
-    first_name: str = "",
-    last_name: str = "",
-) -> str:
-    """
-    Create a new BrandVoca account. Stores the access token on success.
-
-    Args:
-        username: Desired username.
-        email: Email address.
-        password: Password.
-        password2: Password confirmation (must match password).
-        first_name: Optional first name.
-        last_name: Optional last name.
-    """
-    global _runtime_token
-    payload: dict = {
-        "username": username,
-        "email": email,
-        "password": password,
-        "password2": password2,
-    }
-    if first_name:
-        payload["first_name"] = first_name
-    if last_name:
-        payload["last_name"] = last_name
-    with httpx.Client(timeout=15) as client:
-        r = client.post(
-            f"{API_URL}/api/auth/register/",
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-    data = r.json()
-    if r.status_code == 201 and data.get("success"):
-        _runtime_token = data["tokens"]["access"]
-        user = data.get("user", {})
-        return (
-            f"Account created for {user.get('username', username)}. "
-            f"Access token stored for this session."
-        )
-    return f"Registration failed: {r.text}"
-
-
-@app.tool()
-def login_with_google(email: str, first_name: str = "", last_name: str = "") -> str:
-    """
-    Sign in (or sign up) using a Google account.
-    Trusted mode — the backend accepts the email directly, no token verification.
-    Stores the access token in memory for this session.
-
-    Args:
-        email: The user's Google email address (required).
-        first_name: User's first name from Google profile.
-        last_name: User's last name from Google profile.
-    """
-    global _runtime_token
-    payload: dict = {"email": email}
-    if first_name:
-        payload["first_name"] = first_name
-    if last_name:
-        payload["last_name"] = last_name
-    with httpx.Client(timeout=15) as client:
-        r = client.post(
-            f"{API_URL}/api/auth/social/google/",
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-    data = r.json()
-    if r.status_code == 200 and data.get("success"):
-        _runtime_token = data["tokens"]["access"]
-        user = data.get("user", {})
-        return (
-            f"Signed in with Google as {user.get('email', email)}. "
-            f"Credits: {user.get('credit_balance', '?')}. "
-            f"Token stored for this session."
-        )
-    return f"Google sign-in failed: {r.text}"
-
-
-@app.tool()
-def login_with_apple(email: str, first_name: str = "", last_name: str = "") -> str:
-    """
-    Sign in (or sign up) using an Apple account.
-    Trusted mode — the backend accepts the email directly, no token verification.
-    Stores the access token in memory for this session.
-
-    Args:
-        email: The user's Apple email address (required).
-        first_name: User's first name (Apple only sends this on first auth).
-        last_name: User's last name.
-    """
-    global _runtime_token
-    payload: dict = {"email": email}
-    if first_name:
-        payload["first_name"] = first_name
-    if last_name:
-        payload["last_name"] = last_name
-    with httpx.Client(timeout=15) as client:
-        r = client.post(
-            f"{API_URL}/api/auth/social/apple/",
-            json=payload,
-            headers={"Content-Type": "application/json"},
-        )
-    data = r.json()
-    if r.status_code == 200 and data.get("success"):
-        _runtime_token = data["tokens"]["access"]
-        user = data.get("user", {})
-        return (
-            f"Signed in with Apple as {user.get('email', email)}. "
-            f"Credits: {user.get('credit_balance', '?')}. "
-            f"Token stored for this session."
-        )
-    return f"Apple sign-in failed: {r.text}"
+# ═══════════════════════════════════════════════════════════════════════════
+# Profile & Account
+# ═══════════════════════════════════════════════════════════════════════════
 
 
 @app.tool()
@@ -226,50 +75,6 @@ def update_profile(
         return '{"error": "Provide at least one field to update (email, first_name, last_name)."}'
     return _patch("/api/auth/me/", payload)
 
-
-@app.tool()
-def logout(refresh_token: str) -> str:
-    """
-    Log out by revoking the refresh token. The current access token will
-    expire naturally but can no longer be refreshed.
-
-    Args:
-        refresh_token: The refresh token string received at login.
-    """
-    global _runtime_token
-    with httpx.Client(timeout=15) as client:
-        r = client.post(
-            f"{API_URL}/api/auth/logout/",
-            json={"refresh": refresh_token},
-            headers=_headers(),
-        )
-    if r.status_code == 200:
-        _runtime_token = ""
-        return "Logged out successfully. Token cleared."
-    return f"Logout failed: {r.text}"
-
-
-@app.tool()
-def refresh_token(refresh: str) -> str:
-    """
-    Exchange a refresh token for a new access token. Stores the new token
-    in memory for this session.
-
-    Args:
-        refresh: The refresh token string received at login.
-    """
-    global _runtime_token
-    with httpx.Client(timeout=15) as client:
-        r = client.post(
-            f"{API_URL}/api/auth/token/refresh/",
-            json={"refresh": refresh},
-            headers={"Content-Type": "application/json"},
-        )
-    data = r.json()
-    if r.status_code == 200:
-        _runtime_token = data.get("access", "")
-        return "Access token refreshed and stored for this session."
-    return f"Token refresh failed: {r.text}"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -480,8 +285,14 @@ def _delete(path: str) -> str:
 
 def _post_multipart(path: str, data: dict | None = None, files: list | None = None) -> str:
     """POST with multipart/form-data (for file uploads)."""
+    token = os.environ.get("BRANDVOCA_API_KEY", "")
+    if not token:
+        raise RuntimeError(
+            "BRANDVOCA_API_KEY is not set. Add it to your environment: "
+            "export BRANDVOCA_API_KEY=your_jwt_token"
+        )
     headers = {
-        "Authorization": f"Bearer {_runtime_token}",
+        "Authorization": f"Bearer {token}",
         "Accept": "application/json",
     }
     with httpx.Client(timeout=120) as client:
@@ -905,7 +716,8 @@ def publish_brand_name(brand_id: str, name_id: str, name: str = "") -> str:
     """
     payload: dict = {}
     if name:
-        payload["name"] = name
+        # The REST endpoint expects `selected_name`
+        payload["selected_name"] = name
     return _post(f"/api/brands/{brand_id}/brand-name/{name_id}/publish/", payload)
 
 
@@ -1211,6 +1023,133 @@ def rate_asset(
         return f'{{"error": "asset_id is required for asset_type \\"{asset_type}\\""}}'
 
     return _post(path_map[asset_type], {"rating": rating})
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Questionnaire AI Suggest
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@app.tool()
+def ai_suggest(
+    brand_id: str,
+    step: int,
+    form_data: str = "{}",
+) -> str:
+    """
+    Get AI-generated suggestions for empty questionnaire fields on a given step.
+    Read-only — does not modify any questionnaire data.
+
+    Steps correspond to questionnaire tabs (0-4):
+      0 — Brand Basics (name, tagline, description, industry)
+      1 — Audience & Problem (target audiences, problem solved, core promise)
+      2 — Brand Personality (emotion, spectrum sliders)
+      3 — Visual Direction (logo type, brand values, differentiators)
+      4 — Use Cases & Pricing (main use cases, price/quality spectrum)
+
+    Args:
+        brand_id: UUID of the brand.
+        step: Tab index (0–4) to generate suggestions for.
+        form_data: JSON string of current questionnaire field values (optional).
+    """
+    import json as _json
+    try:
+        parsed_form = _json.loads(form_data) if form_data.strip() else {}
+    except _json.JSONDecodeError:
+        parsed_form = {}
+    return _post(f"/api/brands/{brand_id}/questionnaire/ai-suggest/", {
+        "step": step,
+        "form_data": parsed_form,
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Domain Availability
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@app.tool()
+def check_domain(brand_id: str, name: str) -> str:
+    """
+    Check domain availability and pricing for a brand name across the default
+    TLD set (com, net, org, io, co, app, dev, ai, xyz). Costs 10 credits.
+
+    Call this after the user picks a brand name they like to help them find
+    an available domain. Returns availability + registration/renewal pricing
+    for each TLD.
+
+    Args:
+        brand_id: UUID of the brand.
+        name: The brand name to check (e.g. "brandvoca" — no TLD, no spaces).
+    """
+    return _post(f"/api/brands/{brand_id}/brand-name/check-domain/", {"name": name})
+
+
+@app.tool()
+def domain_suggestions(
+    brand_id: str,
+    name: str,
+    max_suggestions: int = 10,
+) -> str:
+    """
+    Generate and check alternative domain suggestions using prefix/suffix
+    combinations (get-, my-, the-, try-, -app, -hq, -pro, -ai, etc.).
+    Only returns available domains. Costs 10 credits.
+
+    Use this when the primary domains for a brand name are all taken.
+
+    Args:
+        brand_id: UUID of the brand.
+        name: The brand name to build suggestions from (no TLD, no spaces).
+        max_suggestions: Maximum number of available suggestions to return (default 10).
+    """
+    return _post(f"/api/brands/{brand_id}/brand-name/domain-suggestions/", {
+        "name": name,
+        "max_suggestions": max_suggestions,
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# Logo — SVG & Set as Primary
+# ═══════════════════════════════════════════════════════════════════════════
+
+
+@app.tool()
+def get_logo_svg(brand_id: str, logo_id: str) -> str:
+    """
+    Generate (or return cached) an SVG version of a logo's symbol.
+
+    First call: Gemini extracts the symbol from the composite PNG and converts
+    it to SVG — costs 15 credits. Subsequent calls return the cached SVG URL
+    for free. The response includes:
+      - svg_url: URL of the generated SVG file
+      - symbol_url: URL of the symbol-only PNG (by-product)
+      - cached: true if no credits were deducted
+
+    Free plan users cannot generate SVGs (upgrade required).
+
+    Args:
+        brand_id: UUID of the brand.
+        logo_id: UUID of the logo version.
+    """
+    return _post(f"/api/brands/{brand_id}/logo/{logo_id}/svg/")
+
+
+@app.tool()
+def set_logo_as_primary(brand_id: str, logo_id: str) -> str:
+    """
+    Promote an AI-generated logo image to the brand's primary (reference) logo.
+    The primary logo is used as visual DNA for all future logo generations,
+    giving Gemini a pixel-level reference for style, color, and composition.
+
+    Use this when the user likes a generated logo and wants future generations
+    to build on it rather than starting fresh from the brand analysis.
+
+    Args:
+        brand_id: UUID of the brand.
+        logo_id: UUID of the logo version to promote.
+    """
+    return _post(f"/api/brands/{brand_id}/logo/{logo_id}/set-primary/")
 
 
 # ── Entry point ───────────────────────────────────────────────────────────

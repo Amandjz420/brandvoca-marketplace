@@ -7,11 +7,12 @@ description: >
   "generate website UI", "create landing page design", "regenerate the logo",
   "I want a different color palette", "refine my logo", "try a different logo style",
   "generate all logos", "show me logo options", "generate brand kit", "create design system",
-  "generate UI kit", "show me the brand kit", "refine the brand kit". Also use for any
-  publishing action: "publish this palette", "publish the logo", "make this the active brand name",
-  "publish the brand kit".
+  "generate UI kit", "show me the brand kit", "refine the brand kit", "check domain availability",
+  "is this domain taken", "export logo as SVG", "get SVG", "set logo as primary reference".
+  Also use for any publishing action: "publish this palette", "publish the logo",
+  "make this the active brand name", "publish the brand kit".
 metadata:
-  version: "0.3.0"
+  version: "1.0.0"
 ---
 
 # BrandVoca Brand Assets
@@ -34,12 +35,16 @@ Generate, refine, and publish specific brand assets for an existing brand.
 | `get_brand_name` | Get a specific brand name version by ID |
 | `list_brand_names` | List all name versions |
 | `publish_brand_name` | Publish a name (propagates across all brand assets) |
+| `check_domain` | Check domain availability + pricing for a brand name (10 credits) |
+| `domain_suggestions` | Get available alternative domains with prefix/suffix combos (10 credits) |
 | `generate_logo` | Generate a logo image in one of 6 styles using Gemini |
 | `get_logo` | Get a specific logo version by ID (includes image_url + concept) |
 | `list_logos` | List all logo versions (filter by style/status) |
 | `publish_logo` | Publish a logo version |
 | `upload_primary_logo` | Upload/replace the primary logo reference image |
 | `delete_primary_logo` | Remove the primary logo reference image |
+| `set_logo_as_primary` | Promote a generated logo to the primary reference image |
+| `get_logo_svg` | Generate SVG of logo symbol — 15 credits first time, free after (cached) |
 | `generate_website_ui` | Generate a landing page hero section UI image |
 | `get_website_ui` | Get a specific website UI version by ID |
 | `list_website_uis` | List all website UI versions |
@@ -80,6 +85,12 @@ Before generating logos, the user can optionally upload a reference logo image. 
 - Call `delete_primary_logo(brand_id)`.
 - After removal, Gemini will generate logos purely from the brand analysis.
 
+### Promoting a Generated Logo to Primary
+- After the user likes a generated logo, offer to set it as the primary reference:
+  "Want me to set this logo as your primary reference? Future generations will build on it."
+- Call `set_logo_as_primary(brand_id, logo_id)`.
+- This copies the AI-generated image directly from storage — no URL round-trip needed.
+
 ## Logo Generation
 
 ### Generating a Logo
@@ -113,6 +124,49 @@ If user wants to see all options:
 - Warn this will make 6 separate Gemini calls and take several minutes.
 - Generate them sequentially: flat_vector → geometric_minimal → abstract_symbolic → bold_wordmark → minimal_mascot → dynamic_motion.
 - Present all 6 image URLs in a gallery-style list with their style names.
+
+### SVG Export (Pro/Max Plan Only)
+
+After showing a logo the user likes, offer SVG export:
+- "Want an SVG version of the logo symbol? First generation costs 15 credits, then it's free (cached)."
+- Call `get_logo_svg(brand_id, logo_id)`.
+- The response includes:
+  - `svg_url` — the SVG file URL (link it directly)
+  - `symbol_url` — symbol-only PNG (by-product of extraction)
+  - `cached: true` — no credits deducted (already generated)
+- Free plan users will see a 403 error with `upgrade_required: true` — tell them SVG export requires Pro or Max.
+
+## Domain Availability (After Brand Name)
+
+After publishing a brand name, proactively offer domain availability checking:
+
+### Checking Primary Domains
+- Call `check_domain(brand_id, name="brandname")` — name should be lowercase, no spaces, no TLD.
+- Costs 10 credits. Checks: com, net, org, io, co, app, dev, ai, xyz.
+- Present results in a clean format:
+
+```
+**Domain Availability for "brandvoca"**
+
+✅ brandvoca.com   — ₹750/yr register · ₹1,100/yr renew
+❌ brandvoca.net   — Taken
+✅ brandvoca.io    — ₹3,500/yr register · ₹4,200/yr renew
+❌ brandvoca.co    — Taken
+✅ brandvoca.app   — ₹1,200/yr register
+```
+
+### Getting Domain Suggestions (When Primary TLDs Are Taken)
+- Call `domain_suggestions(brand_id, name="brandname", max_suggestions=10)`.
+- Returns available alternatives with prefixes (get-, my-, the-, try-, use-, go-, hey-) and suffixes (-app, -hq, -hub, -pro, -ai).
+- Only shows available domains with pricing. Costs 10 credits.
+
+Example output:
+```
+**Available Alternatives**
+✅ getbrandvoca.com  — ₹750/yr
+✅ brandvocahq.io   — ₹3,500/yr
+✅ mybrandvoca.app  — ₹1,200/yr
+```
 
 ## Color Palette
 
@@ -190,6 +244,7 @@ Once the user picks a name:
 1. Ask them to confirm: "Are you sure you want to publish '[Name]'? This will update all existing brand assets."
 2. Call `publish_brand_name(brand_id, name_id, name="Chosen Name")`.
 3. Confirm the change: "Done — all palettes, typography, and logos have been updated to use '[Name]'."
+4. Offer domain check: "Want me to check domain availability for '[chosen-name]'? (10 credits)"
 
 ## Website UI
 

@@ -7,7 +7,7 @@ description: >
   end-to-end. Also use when the user asks "what should I do next" for a brand that already
   exists but is incomplete.
 metadata:
-  version: "0.3.0"
+  version: "1.0.0"
 ---
 
 # BrandVoca Brand Workflow
@@ -21,13 +21,18 @@ Guide the user through BrandVoca's 9-step brand identity pipeline. Each step bui
 | `brand_intake` | Create a new brand from text + file uploads; Gemini auto-fills questionnaire |
 | `get_brand` | Get full brand details to check pipeline status |
 | `get_questionnaire` | View the 30-field questionnaire and its completion status |
+| `ai_suggest` | Get AI suggestions for empty questionnaire fields (read-only, no credits) |
 | `update_questionnaire` | Update/submit questionnaire fields (set submit=True to finalize) |
 | `generate_brand_analysis` | Generate 7-section brand analysis from completed questionnaire |
 | `generate_color_palette` | Generate color system (+ `publish_color_palette`) |
 | `generate_typography` | Generate font-pairing system (+ `publish_typography`) |
 | `generate_brand_names` | Generate name suggestions (+ `publish_brand_name`) |
+| `check_domain` | Check domain availability + pricing for a brand name (10 credits) |
+| `domain_suggestions` | Get available alternative domain combos (prefix/suffix) (10 credits) |
 | `generate_logo` | Generate logo in one of 6 styles (+ `publish_logo`) |
 | `upload_primary_logo` | Upload a reference logo image before generating logos |
+| `set_logo_as_primary` | Promote a generated logo to the primary reference image |
+| `get_logo_svg` | Generate SVG version of a logo's symbol (15 credits, cached after first call) |
 | `generate_website_ui` | Generate landing page hero section |
 | `generate_brand_kit` | Generate complete design system / UI kit (+ `publish_brand_kit`) |
 | `get_brand_kit` | Get a specific brand kit version by ID |
@@ -42,6 +47,7 @@ Guide the user through BrandVoca's 9-step brand identity pipeline. Each step bui
 4. Color Palette → Gemini generates color system (auto-published on first run)
 5. Typography    → Gemini generates font-pairing system (auto-published on first run)
 6. Brand Name    → Grok generates name suggestions → user picks one to publish
+   6b. Domain    → optional: check domain availability for chosen name (10 credits)
 7. Logo          → Gemini generates logo images (6 styles available)
 8. Website UI    → Gemini generates landing page hero section
 9. Brand Kit     → Gemini generates complete design system / UI kit (14 sections)
@@ -88,6 +94,12 @@ Tell the user clearly which step they're on and what comes next.
 ### Step 2 — Questionnaire Review & Submission
 - Call `get_questionnaire(brand_id)` to see all 30 fields and their current values.
 - Walk through the fields with the user, focusing on any that are empty or need correction.
+- **AI Suggest**: For empty fields, call `ai_suggest(brand_id, step=N)` where N is the tab index (0–4). This is free (no credits) and gives smart suggestions based on what's already filled.
+  - Step 0: Brand Basics (name, tagline, description, industry)
+  - Step 1: Audience & Problem
+  - Step 2: Brand Personality
+  - Step 3: Visual Direction
+  - Step 4: Use Cases & Pricing
 - Key required fields for submission: `brand_name`, `tagline`, `one_sentence_description`, `industry_category`, `primary_target_audience`, `secondary_target_audience`, `why_these_audiences`, `problem_solved`, `core_promise`, `differentiators`, `brand_emotion`, `price_quality_spectrum`, `logo_works_small`, `preferred_logo_type`, `modern_classic` (1-10), `minimal_detailed` (1-10), `playful_serious` (1-10), `soft_sharp` (1-10), `human_techy` (1-10), `friendly_professional` (1-10), `brand_values` (3-7 items), `main_use_cases`.
 - To save changes without submitting: call `update_questionnaire(brand_id, field1="...", field2="...")`.
 - To finalize and submit: call `update_questionnaire(brand_id, submit=True, ...)` with any remaining field updates.
@@ -118,6 +130,18 @@ Tell the user clearly which step they're on and what comes next.
 - Call `publish_brand_name(brand_id, name_id, name="chosen name")`.
 - Confirm that the name is now propagated across all existing brand assets.
 
+#### Step 6b — Domain Check (Optional but Recommended)
+After publishing a brand name, proactively offer to check domain availability:
+- "Would you like me to check if **[name].com** and other domains are available? (10 credits)"
+- If yes: call `check_domain(brand_id, name="chosen-name-lowercase")`.
+- Show results in a clean table:
+  ```
+  brandvoca.com  ✅ Available  — ₹750/yr register, ₹1,100/yr renew
+  brandvoca.net  ❌ Taken
+  brandvoca.io   ✅ Available  — ₹3,500/yr register
+  ```
+- If the preferred TLDs are all taken: call `domain_suggestions(brand_id, name="...")` to find available alternatives with prefix/suffix combos.
+
 ### Step 7 — Logo
 - **Optional**: If the user has an existing logo they want to use as a reference, call `upload_primary_logo(brand_id, file_path="...")` before generating. This gives Gemini a visual reference. To remove it later, call `delete_primary_logo(brand_id)`.
 - Explain there are 6 styles available. Ask which the user wants to generate.
@@ -126,6 +150,8 @@ Tell the user clearly which step they're on and what comes next.
 - To view a specific version later: `get_logo(brand_id, logo_id)`.
 - Suggest trying multiple styles: flat_vector first (most versatile), then geometric_minimal.
 - For refinement: call `generate_logo` with `user_feedback` + `previous_version_id`.
+- **Set as Primary**: If the user loves a generated logo and wants future generations to use it as a reference, call `set_logo_as_primary(brand_id, logo_id)`. This replaces the primary logo with the AI-generated one.
+- **SVG Export** (Pro/Max plan only): Call `get_logo_svg(brand_id, logo_id)` to generate an SVG of the symbol. First call costs 15 credits; subsequent calls are free (cached). Show the `svg_url`.
 
 ### Step 8 — Website UI
 - Call `generate_website_ui(brand_id)` — takes 20–60 seconds.

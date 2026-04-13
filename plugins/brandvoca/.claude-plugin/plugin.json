@@ -1,7 +1,7 @@
 {
   "name": "brandvoca",
-  "version": "0.2.0",
-  "description": "AI-powered brand identity tools for BrandVoca. Generate color palettes, typography, logos, and landing page UIs from your brand analysis.",
+  "version": "0.3.0",
+  "description": "AI-powered brand identity platform. Create brands, generate logos, color palettes, typography, brand names, website UIs, and design systems. Includes domain availability checking, SVG logo export, and a complete 9-step brand creation pipeline.",
   "author": {
     "name": "BrandVoca"
   },
